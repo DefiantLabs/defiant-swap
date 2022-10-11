@@ -11,4 +11,7 @@ This service is supported by a proprietary backend REST API (and trading algorit
 in an automated fashion e.g. with code/bots. If you wish to use our API for automation purposes, please contact us first. 
 
 USAGE:
-./defiant-swap swap --in OSMO --out JUNO --amount-in 20000 --min-amount-out 1 --from arb --keyring-backend test
+ ./defiant-swap swap --in AKT --out OSMO --amount-in 100000 --min-amount-out 1 --from arb --keyring-backend test --verify-funds=false
+
+The verify funds param does not need to be set to false. However, if true (default), it will check that the user's wallet has enough funds to perform the swap.
+If false, it won't check and it will just do the simulation as if you have enough funds.
