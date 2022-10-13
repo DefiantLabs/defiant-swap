@@ -56,7 +56,7 @@ var swapCmd = &cobra.Command{
 		address := clientCtx.GetFromAddress().String()
 		fmt.Printf("Address: %s\n", address)
 		jwt := query.JWT{}
-		err, _ = query.PostJson(genTokenUrl, &query.Address{Address: address}, &jwt, nil)
+		err, _ = query.PostJson(genTokenUrl, &query.JWTRequest{Address: address}, &jwt, nil)
 
 		cobra.CheckErr(err)
 		symbolIn, _ := flagSet.GetString("in")

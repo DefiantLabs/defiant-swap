@@ -5,8 +5,9 @@ import (
 	"github.com/osmosis-labs/osmosis/v12/x/gamm/types"
 )
 
-type Address struct {
+type JWTRequest struct {
 	Address string `json:"address"`
+	Partner string `json:"partner"`
 }
 
 type JWT struct {
