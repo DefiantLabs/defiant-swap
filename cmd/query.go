@@ -180,8 +180,8 @@ func Confirm(prompt string) error {
 	ok, err := input.GetConfirmation(prompt, buf, os.Stderr)
 
 	if err != nil || !ok {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-		return err
+		//_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+		return errors.New("cancelled transaction")
 	}
 
 	return nil
