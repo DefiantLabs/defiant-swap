@@ -10,9 +10,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+	"github.com/tendermint/tendermint/libs/cli"
 )
 
 var genTokenUrl = "http://arb.defiantlabs.net:8080/api/token"
@@ -20,12 +25,84 @@ var simulateSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimateswap"
 var defiantRpc = "http://arb.defiantlabs.net:26657"
 var defaultChain = "osmosis-1"
 
+var ledgerCmd = &cobra.Command{
+	Use:   "ledger <keyname>",
+	Short: "Configure ledger device. Omit keyname to list ledger keys. Use --delete flag to delete the key.",
+	Long:  `Will check that a ledger key exists and print all ledger keys, or prompt to add one`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		keyName := ""
+		ctx, err := client.GetClientQueryContext(cmd)
+		cobra.CheckErr(err)
+		kb := ctx.Keyring
+
+		if len(args) > 0 {
+			keyName = args[0]
+			if delete {
+				errD := kb.Delete(keyName)
+				cobra.CheckErr(errD)
+				return nil
+			} else {
+				fmt.Printf("Adding key %s -- accept/reject request on Ledger device", keyName)
+			}
+		} else {
+			kri, err := kb.List()
+			cobra.CheckErr(err)
+			fmt.Printf("Listing ledger keys, %d keys total\n", len(kri))
+			counter := 1
+			for _, v := range kri {
+				fmt.Printf("(%d/%d)\n", counter, len(kri))
+				fmt.Printf("Name: %s\nType: %s\nAddress: %s\nPubkey: %s\n", v.GetName(), v.GetType(), v.GetAddress(), v.GetPubKey())
+			}
+			return nil
+		}
+
+		_, err = kb.Key(keyName)
+		buf := bufio.NewReader(ctx.Input)
+		outputFormat := ctx.OutputFormat
+
+		if err == nil {
+			// account exists, ask for user confirmation
+			response, err2 := input.GetConfirmation(fmt.Sprintf("override the existing name %s", keyName), buf, cmd.ErrOrStderr())
+			if err2 != nil {
+				return err2
+			}
+
+			if !response {
+				return errors.New("aborted")
+			}
+
+			err2 = kb.Delete(keyName)
+			if err2 != nil {
+				return err2
+			}
+		}
+
+		coinType, _ := cmd.Flags().GetUint32("coin-type")
+		account, _ := cmd.Flags().GetUint32("account")
+		index, _ := cmd.Flags().GetUint32("index")
+		hd.CreateHDPath(coinType, account, index)
+
+		bech32PrefixAccAddr := sdk.GetConfig().GetBech32AccountAddrPrefix()
+		keyringAlgos, _ := kb.SupportedAlgorithms()
+		algoStr, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+		algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
+		cobra.CheckErr(err)
+
+		info, err := kb.SaveLedgerKey(keyName, algo, bech32PrefixAccAddr, coinType, account, index)
+		if err != nil {
+			return err
+		}
+
+		return printCreate(cmd, info, false, "", outputFormat)
+	},
+}
+
 var swapCmd = &cobra.Command{
 	Use:   "swap",
 	Short: "Performs a swap on Osmosis, optimizing rates for users",
 	Long:  `Optimizes swaps by capturing arbitrage revenue that would normally go to bots. This is a free service provided by Defiant Labs`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clientCtx, err := client.GetClientTxContext(cmd)
+		clientCtx, _ := client.GetClientTxContext(cmd)
 		flagSet := cmd.Flags()
 
 		clientCtx = clientCtx.WithNodeURI(defiantRpc)
@@ -48,10 +125,6 @@ var swapCmd = &cobra.Command{
 		rpcClient, rpcErr := client.NewClientFromNode(rpcProvider)
 		cobra.CheckErr(rpcErr)
 		clientCtx = clientCtx.WithClient(rpcClient)
-
-		if err != nil {
-			return err
-		}
 
 		address := clientCtx.GetFromAddress().String()
 		fmt.Printf("Address: %s\n", address)
@@ -179,6 +252,9 @@ var (
 	amountOut       string //minimum amount you'll receive
 	verifyFunds     bool
 	hasPartnerCode  bool
+
+	//for ledger
+	delete bool
 )
 
 func init() {
@@ -195,6 +271,20 @@ func init() {
 	swapCmd.MarkFlagRequired("amount-in")
 	swapCmd.MarkFlagRequired("min-amount-out")
 	flags.AddTxFlagsToCmd(swapCmd)
+
+	//Ledger setup
+	keysCmd := keys.AddKeyCommand()
+	keysCmd.Flags().AddFlagSet(keys.Commands(".").PersistentFlags())
+	keysCmd.SetArgs([]string{
+		fmt.Sprintf("--%s=true", flags.FlagUseLedger),
+		fmt.Sprintf("--%s=%s", cli.OutputFlag, "text"),
+		fmt.Sprintf("--%s=%s", flags.FlagKeyAlgorithm, string(hd.Secp256k1Type)),
+		fmt.Sprintf("--%s=%d", "coin-type", sdk.CoinType),
+		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
+	})
+	ledgerCmd.Flags().AddFlagSet(keysCmd.Flags())
+	ledgerCmd.Flags().BoolVar(&delete, "delete", false, "Delete the given ledger key.")
+
 }
 
 func Confirm(prompt string) error {

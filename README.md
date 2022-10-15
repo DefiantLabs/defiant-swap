@@ -10,8 +10,17 @@ and alternate trading platforms that wish to maximize returns/rates for their us
 This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API
 in an automated fashion e.g. with code/bots. If you wish to use our API for automation purposes, please contact us first. 
 
-USAGE:
+USAGE (setting up ledger):
+You only need to follow these steps if you have never set up a Ledger before. If you already have a Ledger set up you can use it as normal.
+To list your ledger keys run './defiant-swap ledger' with no other arguments.
+To add a ledger key run './defiant-swap ledger kyle' (or your key name in place of kyle).
+To remove a ledger key run './defiant-swap ledger kyle --delete'.
+
+USAGE (with ledger):
+./defiant-swap swap --in OSMO --out IXO --amount-in 1 --min-amount-out 1 --from kyle --ledger=true
+
+USAGE (no ledger):
  ./defiant-swap swap --in AKT --out OSMO --amount-in 100000 --min-amount-out 1 --from arb --keyring-backend test --verify-funds=false
 
-The verify funds param does not need to be set to false. However, if true (default), it will check that the user's wallet has enough funds to perform the swap.
-If false, it won't check and it will just do the simulation as if you have enough funds.
+By default, the web server (arbitrage/swap estimator) will check that the user's wallet has enough funds to perform the swap.
+Setting the verify funds param to false will estimate the swap without checking the user's wallet funds (useful for simulating swaps). 
