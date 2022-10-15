@@ -56,7 +56,29 @@ var swapCmd = &cobra.Command{
 		address := clientCtx.GetFromAddress().String()
 		fmt.Printf("Address: %s\n", address)
 		jwt := query.JWT{}
-		err, _ = query.PostJson(genTokenUrl, &query.JWTRequest{Address: address}, &jwt, nil)
+		jwtReq := query.JWTRequest{Address: address}
+
+		queryParams := map[string]string{}
+		if hasPartnerCode {
+			secret, err := GetPwd("Enter partner secret:")
+			if err != nil {
+				return err
+			}
+			queryParams["partnerSecret"] = secret
+		}
+
+		//Make a request to the server to authenticate us. The server will return a JWT.
+		httpStatus, err := query.PostJson(genTokenUrl, &jwtReq, &jwt, queryParams, nil)
+
+		if err != nil {
+			return err
+		} else if httpStatus != 200 {
+			if jwt.Error != "" {
+				return fmt.Errorf("HTTP Status %d. Reason: %s", httpStatus, jwt.Error)
+			} else {
+				return fmt.Errorf("HTTP Status %d", httpStatus)
+			}
+		}
 
 		cobra.CheckErr(err)
 		symbolIn, _ := flagSet.GetString("in")
@@ -75,12 +97,10 @@ var swapCmd = &cobra.Command{
 			ArbitrageWallet:      arbitrageWallet,
 		}
 		result := &query.SimulatedSwapResult{}
-		err, httpStatus := query.PostJson(simulateSwapUrl, simSwapReq, &result, &jwt)
+		httpStatus, err = query.PostJson(simulateSwapUrl, simSwapReq, &result, nil, &jwt)
 		if result.Error != "" {
-			//fmt.Printf("Error: %+v\n", result.Error)
 			return errors.New(result.Error)
 		} else if httpStatus != 200 {
-			//fmt.Printf("Issue sending request: http status %d\n", httpStatus)
 			return fmt.Errorf("issue with request, HTTP Status %d", httpStatus)
 		}
 
@@ -158,6 +178,7 @@ var (
 	amountIn        string //amount you want to trade
 	amountOut       string //minimum amount you'll receive
 	verifyFunds     bool
+	hasPartnerCode  bool
 )
 
 func init() {
@@ -167,6 +188,7 @@ func init() {
 	swapCmd.Flags().StringVar(&amountIn, "amount-in", "", "The amount to trade (in the base amount). Ex: if the token is OSMO you might put --amount-in 101.5")
 	swapCmd.Flags().StringVar(&amountOut, "min-amount-out", "", "The minimum amount of the token you want to receive, format is the same as amount-in")
 	swapCmd.Flags().BoolVar(&verifyFunds, "verify-funds", true, "Check that the user's wallet contains enough funds for the trade. Turn off to simulate regardless of funds.")
+	swapCmd.Flags().BoolVar(&hasPartnerCode, "partner", false, "Will prompt for partner secret if --partner=true. Unlocks unlimited API requests.")
 
 	swapCmd.MarkFlagRequired("in")
 	swapCmd.MarkFlagRequired("out")
@@ -185,4 +207,15 @@ func Confirm(prompt string) error {
 	}
 
 	return nil
+}
+
+func GetPwd(prompt string) (string, error) {
+	buf := bufio.NewReader(os.Stdin)
+	pass, err := input.GetPassword(prompt, buf)
+
+	if err != nil {
+		return "", errors.New("cancelled transaction")
+	}
+
+	return pass, nil
 }

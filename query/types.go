@@ -7,11 +7,11 @@ import (
 
 type JWTRequest struct {
 	Address string `json:"address"`
-	Partner string `json:"partner"`
 }
 
 type JWT struct {
-	Token string `json:"token"`
+	Token string `json:"token"`           //If the request succeeded, this is your actual JWT
+	Error string `json:"error,omitempty"` //server will respond with error information (if the request failed) in this JSON field
 }
 
 //The swap that we are simulating. These correspond to the options the user selects with the CLI tool.
