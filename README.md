@@ -2,13 +2,12 @@ Author: Kyle Moser, Defiant Labs
 
 CLI tool for swapping tokens on Osmosis blockchain. Maximizes rates by capturing arbitrage (users capture arbitrage profits instead of bots).
 The larger your trade is, the more beneficial this tool is. Generally, high slippage = worse rates for users = more arbitrage profit for bots. 
-This tool captures arbitrage revenue at the time of the trade, giving it back to users instead of leaving it on-chain for bots to capture. 
+This tool captures arbitrage revenue at the time of the trade, giving it back to users instead of leaving it on-chain for bots to capture. This is a FREE service for users. No fees, profits, etc. go to Defiant Labs. 
 
-This is a FREE service. No fees, profits, etc. go to Defiant Labs. In the future Defiant Labs will be looking to partner with DEXs
-and alternate trading platforms that wish to maximize returns/rates for their users. Contact us at info@defiantlabs.net.
+The tool will simulate your trade ahead of time (before performing the trade) and tell you how much extra $$ you will get through arbitrage. You do not have to perform the trade, if you wish, you are free to test out the simulator. 
 
-This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API
-in an automated fashion e.g. with code/bots. If you wish to use our API for automation purposes, please contact us first. 
+This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API in an automated fashion unless you have been approved by our team (info@defiantlabs.net). 
+
 
 BUILD:
 You do not HAVE to build. You can just run the Linux binary provided (defiant-swap).
