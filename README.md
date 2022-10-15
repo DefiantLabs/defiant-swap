@@ -1,7 +1,7 @@
 # defiant-swap
 
 ## Authors
-- [Kyler Moser](https://github.com/KyleMoser)
+- [Kyle Moser](https://github.com/KyleMoser)
 
 ## TLDR
 
