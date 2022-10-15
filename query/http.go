@@ -19,12 +19,21 @@ func GetJson(url string, target interface{}) error {
 	return json.NewDecoder(r.Body).Decode(target)
 }
 
-func PostJson(url string, request interface{}, response interface{}, jwt *JWT) (error, int) {
+func PostJson(url string, request interface{}, response interface{}, queryParams map[string]string, jwt *JWT) (int, error) {
 	b, _ := json.Marshal(request)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	if err != nil {
-		return err, -1
+		return -1, err
 	}
+
+	if queryParams != nil {
+		q := req.URL.Query()
+		for k, v := range queryParams {
+			q.Add(k, v)
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+
 	req.Header.Set("content-type", "application/json")
 	if jwt != nil {
 		req.Header.Set("Authorization", jwt.Token)
@@ -32,9 +41,9 @@ func PostJson(url string, request interface{}, response interface{}, jwt *JWT) (
 
 	r, err := myClient.Do(req)
 	if err != nil {
-		return err, -1
+		return -1, err
 	}
 	defer r.Body.Close()
 
-	return json.NewDecoder(r.Body).Decode(response), r.StatusCode
+	return r.StatusCode, json.NewDecoder(r.Body).Decode(response)
 }

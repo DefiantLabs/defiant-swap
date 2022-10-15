@@ -52,4 +52,5 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	rootCmd.AddCommand(swapCmd)
+	rootCmd.AddCommand(ledgerCmd)
 }
