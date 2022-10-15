@@ -10,6 +10,13 @@ and alternate trading platforms that wish to maximize returns/rates for their us
 This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API
 in an automated fashion e.g. with code/bots. If you wish to use our API for automation purposes, please contact us first. 
 
+BUILD:
+You do not HAVE to build. You can just run the Linux binary provided (defiant-swap).
+However, if you wish to compile with ledger support, run:
+go build -tags "netgo ledger" -ldflags '-X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo ledger," -w -s' -o defiant-swap main.go
+Or without ledger support:
+go build -ldflags '-w -s' -o defiant-swap main.go
+
 USAGE (setting up ledger):
 You only need to follow these steps if you have never set up a Ledger before. If you already have a Ledger set up you can use it as normal.
 To list your ledger keys run './defiant-swap ledger' with no other arguments.
