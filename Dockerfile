@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 ARG GO_VERSION=1.19.2
 
-RUN apt-get update -y 
+RUN apt-get update -y
 RUN apt-get install -y wget curl make git libc-dev bash gcc
 RUN wget -P /tmp "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz"
 
