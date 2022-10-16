@@ -17,7 +17,8 @@ This tool captures arbitrage revenue at the time of the trade, giving it back to
 
 
 ## Download
-Release are avilable [here](https://github.com/DefiantLabs/defiant-swap/releases)
+Releases are avilable [here](https://github.com/DefiantLabs/defiant-swap/releases)
+Docker Images are available [here](https://github.com/orgs/DefiantLabs/packages?repo_name=defiant-swap)
 
 ## BUILD
 To compile with ledger support, run:
@@ -56,3 +57,26 @@ USAGE (no ledger):
 ```
  ./defiant-swap swap --in AKT --out OSMO --amount-in 100000 --min-amount-out 1 --from arb --keyring-backend test --verify-funds=false
  ```
+
+## Run with Docker
+### No-Ledger
+```shell
+docker run -it --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```
+
+### Ledger Easy
+you must connect you ledger, and mount your devices inside the container and use privlidged mode.
+```shell
+docker run -it --privileged -v /dev/bus/usb:/dev/bus/usb --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```
+
+### Ledger Best
+
+```shell
+lsusb |grep -i ledger
+Bus 005 Device 020: ID 2c97:4011 Ledger Nano X
+```
+Use the Device value for your system.  EG: `020`
+```
+➜   ~ docker run -v /dev:/dev --device-cgroup-rule='c 020:* rmw' -it --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```

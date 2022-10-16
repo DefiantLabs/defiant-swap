@@ -20,6 +20,5 @@ COPY . $GOPATH/src
 WORKDIR $GOPATH/src
 
 RUN make install
-RUN ln -sf /go/bin/OsmosisArbitrageBot /go/bin/defiant-swap
 
 CMD [ "/go/bin/defiant-swap" ]

@@ -56,7 +56,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 all: install
 
 install: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) .
+	go install -mod=readonly $(BUILD_FLAGS) . && ln -sf ~/go/bin/OsmosisArbitrageBot ~/go/bin/defiant-swap
 
 build:
 	go build $(BUILD_FLAGS) -o bin/defiant-swap .
