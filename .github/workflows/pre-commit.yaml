@@ -2,8 +2,11 @@ name: pre-commit
 
 on:
   pull_request:
+    branches:
+      - main
   push:
-    branches: [main]
+    branches:
+    - '**'
 
 jobs:
   pre-commit:
