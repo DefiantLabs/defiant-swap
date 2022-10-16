@@ -61,7 +61,7 @@ var ledgerCmd = &cobra.Command{
 		outputFormat := ctx.OutputFormat
 
 		if err == nil {
-			// account exists, ask for user confirmation
+			//  account exists, ask for user confirmation
 			response, err2 := input.GetConfirmation(fmt.Sprintf("override the existing name %s", keyName), buf, cmd.ErrOrStderr())
 			if err2 != nil {
 				return err2
@@ -121,7 +121,7 @@ var swapCmd = &cobra.Command{
 		}
 		clientCtx = clientCtx.WithChainID(chain)
 
-		//RPC connection endpoint
+		// RPC connection endpoint
 		rpcClient, rpcErr := client.NewClientFromNode(rpcProvider)
 		cobra.CheckErr(rpcErr)
 		clientCtx = clientCtx.WithClient(rpcClient)
@@ -140,7 +140,7 @@ var swapCmd = &cobra.Command{
 			queryParams["partnerSecret"] = secret
 		}
 
-		//Make a request to the server to authenticate us. The server will return a JWT.
+		// Make a request to the server to authenticate us. The server will return a JWT.
 		httpStatus, err := query.PostJson(genTokenUrl, &jwtReq, &jwt, queryParams, nil)
 
 		if err != nil {
@@ -245,15 +245,15 @@ var swapCmd = &cobra.Command{
 }
 
 var (
-	arbitrageWallet string //wallet to use for arbs. defaults to user wallet.
-	tokenFrom       string //token to trade from
-	tokenTo         string //token to trade to
-	amountIn        string //amount you want to trade
-	amountOut       string //minimum amount you'll receive
+	arbitrageWallet string // wallet to use for arbs. defaults to user wallet.
+	tokenFrom       string // token to trade from
+	tokenTo         string // token to trade to
+	amountIn        string // amount you want to trade
+	amountOut       string // minimum amount you'll receive
 	verifyFunds     bool
 	hasPartnerCode  bool
 
-	//for ledger
+	// for ledger
 	delete bool
 )
 
@@ -272,7 +272,7 @@ func init() {
 	swapCmd.MarkFlagRequired("min-amount-out")
 	flags.AddTxFlagsToCmd(swapCmd)
 
-	//Ledger setup
+	// Ledger setup
 	keysCmd := keys.AddKeyCommand()
 	keysCmd.Flags().AddFlagSet(keys.Commands(".").PersistentFlags())
 	keysCmd.SetArgs([]string{
@@ -280,7 +280,7 @@ func init() {
 		fmt.Sprintf("--%s=%s", cli.OutputFlag, "text"),
 		fmt.Sprintf("--%s=%s", flags.FlagKeyAlgorithm, string(hd.Secp256k1Type)),
 		fmt.Sprintf("--%s=%d", "coin-type", sdk.CoinType),
-		//fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
+		// fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
 	})
 	ledgerCmd.Flags().AddFlagSet(keysCmd.Flags())
 	ledgerCmd.Flags().BoolVar(&delete, "delete", false, "Delete the given ledger key.")
@@ -292,7 +292,7 @@ func Confirm(prompt string) error {
 	ok, err := input.GetConfirmation(prompt, buf, os.Stderr)
 
 	if err != nil || !ok {
-		//_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+		// _, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
 		return errors.New("cancelled transaction")
 	}
 
