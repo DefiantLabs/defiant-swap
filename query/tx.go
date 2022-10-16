@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
-//Gas fee is based on Osmosis fees for different numbers of pools
-//Exact fee (in uosmo) == .005 * the number below, so it is quite minimal.
+// Gas fee is based on Osmosis fees for different numbers of pools
+// Exact fee (in uosmo) == .005 * the number below, so it is quite minimal.
 func GetGasFee(numRoutes int) uint64 {
 	switch numRoutes {
 	case 1:

@@ -14,8 +14,8 @@ type JWT struct {
 	Error string `json:"error,omitempty"` //server will respond with error information (if the request failed) in this JSON field
 }
 
-//The swap that we are simulating. These correspond to the options the user selects with the CLI tool.
-//Basically, how much the user wants to trade (e.g. 100 JUNO for X OSMO).
+// The swap that we are simulating. These correspond to the options the user selects with the CLI tool.
+// Basically, how much the user wants to trade (e.g. 100 JUNO for X OSMO).
 type SimulatedSwapRequest struct {
 	TokenInSymbol     string
 	TokenInAmount     string
@@ -28,7 +28,7 @@ type SimulatedSwapRequest struct {
 	SkipWalletFundsCheck bool
 }
 
-//Results of the simulation.
+// Results of the simulation.
 type SimulatedSwapResult struct {
 	SimulatedUserSwap       *SimulatedSwap `json:"userSwap,omitempty"`      //the user's swap including the most efficient routes (pools) to use
 	ArbitrageSwap           *ArbitrageSwap `json:"arbitrageSwap,omitempty"` //how much arbitrage the user's swap will cause, routes to use, etc

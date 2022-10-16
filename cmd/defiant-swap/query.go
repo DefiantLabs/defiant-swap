@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/KyleMoser/OsmosisArbitrageCLI/query"
+	"github.com/DefiantLabs/OsmosisArbitrageBot/query"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
