@@ -1,4 +1,4 @@
-module github.com/KyleMoser/OsmosisArbitrageCLI
+module github.com/DefiantLabs/OsmosisArbitrageBot
 
 go 1.18
 
@@ -29,12 +29,12 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
-	github.com/tendermint/tendermint v0.34.21 // indirect
+	github.com/tendermint/tendermint v0.34.21
 	github.com/tendermint/tm-db v0.6.8-0.20220506192307-f628bb5dc95b // indirect
 	google.golang.org/genproto v0.0.0-20220725144611-272f38e5d71b // indirect
 	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

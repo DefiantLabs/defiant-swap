@@ -26,6 +26,7 @@ func BuildSwapExactAmountIn(clientCtx client.Context, tokenIn cosmosSdk.Coin, to
 // chain := "osmosis-1"
 // node := "https://rpc.osmosis.zone:443"
 // osmosisHomeDir := "/home/kyle/.osmosisd"
+//
 //	keyringBackend := "test"
 func GetOsmosisTxClient(encodingConfig osmosisParams.EncodingConfig, chain string, node string, osmosisHomeDir string, keyringBackend string, fromFlag string) *client.Context {
 	//encodingConfig := osmosis.MakeEncodingConfig()

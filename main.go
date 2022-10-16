@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/KyleMoser/OsmosisArbitrageCLI/cmd"
+	cmd "github.com/DefiantLabs/OsmosisArbitrageBot/cmd/defiant-swap"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	osmosis "github.com/osmosis-labs/osmosis/v12/app"
 	"github.com/osmosis-labs/osmosis/v12/app/params"

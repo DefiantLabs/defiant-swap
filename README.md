@@ -8,16 +8,17 @@
 `defiant-swap` is a CLI tool for swapping tokens on Osmosis dex. It maximizes rates by capturing arbitrage at the time of trade. This arbitrage is awarded to the user instead of others (bots, protocols)
 
 ## How it works
-- The larger your trade is, the more beneficial this tool is. Generally, high slippage = worse rates for users = more arbitrage profit for bots. 
+- The larger your trade is, the more beneficial this tool is. Generally, high slippage = worse rates for users = more arbitrage profit for bots.
 This tool captures arbitrage revenue at the time of the trade, giving it back to users instead of leaving it on-chain for bots to capture. This is launching as a `FREE` service for users. Please do not abuse.
 
-- The tool will simulate your trade ahead of time (before performing the trade) and tell you how much extra $$ you will get through arbitrage. You do not have to perform the trade, if you wish, you are free to test out the simulator. 
+- The tool will simulate your trade ahead of time (before performing the trade) and tell you how much extra $$ you will get through arbitrage. You do not have to perform the trade, if you wish, you are free to test out the simulator.
 
-- This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API in an automated fashion unless you have been approved by our team (info@defiantlabs.net). 
+- This service is supported by a proprietary backend REST API (and trading algorithm). Please do not abuse this tool by invoking our REST API in an automated fashion unless you have been approved by our team (info@defiantlabs.net).
 
 
 ## Download
-Release are avilable [here](https://github.com/DefiantLabs/defiant-swap/releases)
+Releases are avilable [here](https://github.com/DefiantLabs/defiant-swap/releases)
+Docker Images are available [here](https://github.com/orgs/DefiantLabs/packages?repo_name=defiant-swap)
 
 ## BUILD
 To compile with ledger support, run:
@@ -30,19 +31,19 @@ go build -ldflags '-w -s' -o defiant-swap main.go
 ```
 ## Ledger Info
 
-By default, the web server (arbitrage/swap estimator) will check that the user's wallet has enough funds to perform the swap. Setting the `verify funds` param to false will estimate the swap without checking the user's wallet funds (useful for simulating swaps). 
+By default, the web server (arbitrage/swap estimator) will check that the user's wallet has enough funds to perform the swap. Setting the `verify funds` param to false will estimate the swap without checking the user's wallet funds (useful for simulating swaps).
 
 
-To list your ledger keys run 
+To list your ledger keys run
 ```
 ./defiant-swap ledger
-``` 
+```
 
 To add a ledger key run
 ```
 ./defiant-swap ledger yourname
-``` 
-To remove a ledger key run 
+```
+To remove a ledger key run
 ```
 ./defiant-swap ledger yourname --delete
 ```
@@ -57,3 +58,25 @@ USAGE (no ledger):
  ./defiant-swap swap --in AKT --out OSMO --amount-in 100000 --min-amount-out 1 --from arb --keyring-backend test --verify-funds=false
  ```
 
+## Run with Docker
+### No-Ledger
+```shell
+docker run -it --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```
+
+### Ledger Easy
+you must connect you ledger, and mount your devices inside the container and use privlidged mode.
+```shell
+docker run -it --privileged -v /dev/bus/usb:/dev/bus/usb --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```
+
+### Ledger Best
+
+```shell
+lsusb |grep -i ledger
+Bus 005 Device 020: ID 2c97:4011 Ledger Nano X
+```
+Use the Device value for your system.  EG: `020`
+```
+➜   ~ docker run -v /dev:/dev --device-cgroup-rule='c 020:* rmw' -it --entrypoint /bin/bash ghcr.io/defiantlabs/defiant-swap:latest
+```
