@@ -160,6 +160,8 @@ var swapCmd = &cobra.Command{
 		amountOut, _ := flagSet.GetString("min-amount-out")
 		arbitrageWallet, _ := flagSet.GetString("arb-wallet")
 
+		fmt.Printf("Symbol IN: %s\n", symbolIn)
+
 		simSwapReq := &query.SimulatedSwapRequest{
 			TokenInSymbol:        symbolIn,
 			TokenOutSymbol:       symbolOut,

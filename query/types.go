@@ -14,8 +14,9 @@ type JWT struct {
 	Error string `json:"error,omitempty"` // server will respond with error information (if the request failed) in this JSON field
 }
 
-// The swap that we are simulating. These correspond to the options the user selects with the CLI tool.
-// Basically, how much the user wants to trade (e.g. 100 JUNO for X OSMO).
+// The swap that we are simulating. These correspond to the options the user selects with the CLI tool
+// Basically, how much the user wants to trade (e.g. 100 JUNO for X OSMO)
+// swagger:parameters swapRequest
 type SimulatedSwapRequest struct {
 	TokenInSymbol     string
 	TokenInAmount     string
@@ -28,7 +29,8 @@ type SimulatedSwapRequest struct {
 	SkipWalletFundsCheck bool
 }
 
-// Results of the simulation.
+// Results of the simulation
+// swagger:model result
 type SimulatedSwapResult struct {
 	SimulatedUserSwap       *SimulatedSwap `json:"userSwap,omitempty"`      // the user's swap including the most efficient routes (pools) to use
 	ArbitrageSwap           *ArbitrageSwap `json:"arbitrageSwap,omitempty"` // how much arbitrage the user's swap will cause, routes to use, etc
@@ -40,6 +42,13 @@ type ArbitrageSwap struct {
 	SimulatedSwap                *SimulatedSwap // the arbitrage swap including the most efficient routes (pools) to use
 	EstimatedProfitHumanReadable string         // e.g. 11.64 OSMO
 	EstimatedProfitBaseAmount    string         // e.g. 11.64
+}
+
+// FooBarResponse represents body of FooBar response.
+type FooBarResponse struct {
+	Baz struct {
+		Prop string `json:"prop"`
+	} `json:"baz"`
 }
 
 type SimulatedSwap struct {

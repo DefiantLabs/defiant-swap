@@ -1,0 +1,65 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    result:
+        description: Results of the simulation
+        x-go-name: SimulatedSwapResult
+        x-go-package: github.com/DefiantLabs/OsmosisArbitrageBot/query
+host: arb.defiantlabs.net:8080
+info:
+    description: Estimate user swaps ahead of time, and provide arbitrage trade information.
+    title: defiant-swap.
+    version: 1.0.0
+paths:
+    /foobar:
+        post:
+            operationId: swapRequest
+            parameters:
+                - in: query
+                  name: token_in
+                  type: string
+                  x-go-name: TokenInSymbol
+                - in: query
+                  name: TokenInAmount
+                  type: string
+                - in: query
+                  name: TokenOutSymbol
+                  type: string
+                - in: query
+                  name: TokenOutMinAmount
+                  type: string
+                - in: query
+                  name: UserWallet
+                  type: string
+                - in: query
+                  name: ArbitrageWallet
+                  type: string
+                - description: |-
+                    If you ask to simulate a trade of 100 JUNO for X OSMO, but your wallet doesn't have at least 100 JUNO,
+                    it will cause an error. But if you specify "--skip-checks" it will simulate for you anyway instead of causing an error.
+                  in: query
+                  name: SkipWalletFundsCheck
+                  type: boolean
+                - description: This text will appear as description of your request body.
+                  in: body
+                  name: Body
+                  required: true
+                  schema: {}
+            responses:
+                "200":
+                    $ref: '#/responses/result'
+            summary: Foobar does some amazing stuff.
+            tags:
+                - foobar-tag
+produces:
+    - application/json
+responses:
+    result:
+        description: This text will appear as description of your response body.
+schemes:
+    - http
+securityDefinitions:
+    basic:
+        type: basic
+swagger: "2.0"
