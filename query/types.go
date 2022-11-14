@@ -29,6 +29,22 @@ type SimulatedSwapRequest struct {
 	SkipWalletFundsCheck bool
 }
 
+//The swap that we are simulating, with the exact pools to trade through
+type SimulatedSwapExactPoolsRequest struct {
+	TokenInDenom         string
+	TokenInAmount        string
+	Routes               []SwapAmountInRoute
+	TokenOutMinAmount    string
+	UserWallet           string
+	ArbitrageWallet      string
+	SkipWalletFundsCheck bool
+}
+
+type SwapAmountInRoute struct {
+	Pool          string `json:"pool_id,omitempty" yaml:"pool_id"`
+	TokenOutDenom string `json:"token_out_denom,omitempty" yaml:"token_out_denom"`
+}
+
 // Results of the simulation
 // swagger:model result
 type SimulatedSwapResult struct {

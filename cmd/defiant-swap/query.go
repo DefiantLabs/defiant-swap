@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/DefiantLabs/OsmosisArbitrageBot/query"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -22,6 +23,8 @@ import (
 
 var genTokenUrl = "http://arb.defiantlabs.net:8080/api/token"
 var simulateSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimateswap"
+var simulateExactSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimatewithpools"
+
 var defiantRpc = "http://arb.defiantlabs.net:26657"
 var defaultChain = "osmosis-1"
 
@@ -155,24 +158,72 @@ var swapCmd = &cobra.Command{
 
 		cobra.CheckErr(err)
 		symbolIn, _ := flagSet.GetString("in")
+		denomIn, _ := flagSet.GetString("denom-in")
 		symbolOut, _ := flagSet.GetString("out")
 		amountIn, _ := flagSet.GetString("amount-in")
 		amountOut, _ := flagSet.GetString("min-amount-out")
 		arbitrageWallet, _ := flagSet.GetString("arb-wallet")
+		poolIDs := []string{}
+		denomIDs := []string{}
 
-		fmt.Printf("Symbol IN: %s\n", symbolIn)
-
-		simSwapReq := &query.SimulatedSwapRequest{
-			TokenInSymbol:        symbolIn,
-			TokenOutSymbol:       symbolOut,
-			TokenInAmount:        amountIn,
-			TokenOutMinAmount:    amountOut,
-			SkipWalletFundsCheck: !verifyFunds,
-			UserWallet:           address,
-			ArbitrageWallet:      arbitrageWallet,
+		route := []query.SwapAmountInRoute{}
+		if len(pools) > 0 {
+			poolIDs = strings.Split(pools, ",")
 		}
+		if len(denoms) > 0 {
+			denomIDs = strings.Split(denoms, ",")
+		}
+
+		if len(poolIDs) == len(denomIDs) {
+			if len(poolIDs) == len(denomIDs) {
+				for i := range poolIDs {
+					fmt.Printf("Pool: %s, denom: %s\n", poolIDs[i], denomIDs[i])
+
+					route = append(route, query.SwapAmountInRoute{
+						Pool:          poolIDs[i],
+						TokenOutDenom: denomIDs[i],
+					})
+				}
+			}
+		} else {
+			return fmt.Errorf("%d pools were specified but only %d denoms were specified. number of pools/denoms must match", len(poolIDs), len(denomIDs))
+		}
+
+		var simSwapReq interface{}
+		url := simulateSwapUrl
+
+		if len(route) > 0 {
+			simSwapReq = &query.SimulatedSwapExactPoolsRequest{
+				TokenInDenom:         denomIn,
+				TokenInAmount:        amountIn,
+				TokenOutMinAmount:    amountOut,
+				Routes:               route,
+				SkipWalletFundsCheck: !verifyFunds,
+				UserWallet:           address,
+				ArbitrageWallet:      arbitrageWallet,
+			}
+
+			url = simulateExactSwapUrl
+		} else {
+			if len(symbolIn) == 0 || len(symbolOut) == 0 {
+				return errors.New("--in and --out flags are required when pools/denoms are not specified")
+			}
+
+			fmt.Printf("Symbol IN: %s\n", symbolIn)
+
+			simSwapReq = &query.SimulatedSwapRequest{
+				TokenInSymbol:        symbolIn,
+				TokenOutSymbol:       symbolOut,
+				TokenInAmount:        amountIn,
+				TokenOutMinAmount:    amountOut,
+				SkipWalletFundsCheck: !verifyFunds,
+				UserWallet:           address,
+				ArbitrageWallet:      arbitrageWallet,
+			}
+		}
+
 		result := &query.SimulatedSwapResult{}
-		httpStatus, err = query.PostJson(simulateSwapUrl, simSwapReq, &result, nil, &jwt)
+		httpStatus, err = query.PostJson(url, simSwapReq, &result, nil, &jwt)
 		if result.Error != "" {
 			return errors.New(result.Error)
 		} else if httpStatus != 200 {
@@ -247,6 +298,9 @@ var swapCmd = &cobra.Command{
 }
 
 var (
+	pools           string //exact pools to swap thru
+	denoms          string //exact denom out to swap thru
+	denomIn         string //input denom if exact pools are specified
 	arbitrageWallet string // wallet to use for arbs. defaults to user wallet.
 	tokenFrom       string // token to trade from
 	tokenTo         string // token to trade to
@@ -268,8 +322,12 @@ func init() {
 	swapCmd.Flags().BoolVar(&verifyFunds, "verify-funds", true, "Check that the user's wallet contains enough funds for the trade. Turn off to simulate regardless of funds.")
 	swapCmd.Flags().BoolVar(&hasPartnerCode, "partner", false, "Will prompt for partner secret if --partner=true. Unlocks unlimited API requests.")
 
-	swapCmd.MarkFlagRequired("in")
-	swapCmd.MarkFlagRequired("out")
+	swapCmd.Flags().StringVar(&pools, "pools", "", "comma separated list of pools to swap through")
+	swapCmd.Flags().StringVar(&denoms, "denoms", "", "comma separated list of denoms OUT to swap through")
+	swapCmd.Flags().StringVar(&denomIn, "denom-in", "", "The denom in. This flag only used when exact pools/denoms are specified")
+
+	// swapCmd.MarkFlagRequired("in")
+	// swapCmd.MarkFlagRequired("out")
 	swapCmd.MarkFlagRequired("amount-in")
 	swapCmd.MarkFlagRequired("min-amount-out")
 	flags.AddTxFlagsToCmd(swapCmd)
