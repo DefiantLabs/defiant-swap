@@ -2,7 +2,6 @@ package query
 
 import (
 	cosmosTypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/osmosis-labs/osmosis/v12/x/gamm/types"
 )
 
 type JWTRequest struct {
@@ -29,7 +28,7 @@ type SimulatedSwapRequest struct {
 	SkipWalletFundsCheck bool
 }
 
-//The swap that we are simulating, with the exact pools to trade through
+// The swap that we are simulating, with the exact pools to trade through
 type SimulatedSwapExactPoolsRequest struct {
 	TokenInDenom         string
 	TokenInAmount        string
@@ -43,6 +42,9 @@ type SimulatedSwapExactPoolsRequest struct {
 type SwapAmountInRoute struct {
 	Pool          string `json:"pool_id,omitempty" yaml:"pool_id"`
 	TokenOutDenom string `json:"token_out_denom,omitempty" yaml:"token_out_denom"`
+	//When you swap on Junoswap, the smart contracts require that you specify either "Token1" or "Token2"
+	//as the input token (instead of the token's denomination).
+	TokenOutJunoswapID string `json:"token_out_junoswap_id,omitempty" yaml:"token_out_junoswap_id"`
 }
 
 // Results of the simulation
@@ -69,9 +71,10 @@ type FooBarResponse struct {
 
 type SimulatedSwap struct {
 	TokenIn                cosmosTypes.Coin
+	TokenInJunoswapID      string `json:"token_in_junoswap_id,omitempty"`
 	TokenOutMinAmount      cosmosTypes.Int
 	Pools                  string
-	Routes                 types.SwapAmountInRoutes `json:"routes,omitempty"`
+	Routes                 []SwapAmountInRoute `json:"routes,omitempty"`
 	TokenOutAmount         cosmosTypes.Int
 	TokenOutDenom          string // one of the 'denom' from asset lists at https:// github.com/osmosis-labs/assetlists/tree/main/osmosis-1
 	TokenInSymbol          string

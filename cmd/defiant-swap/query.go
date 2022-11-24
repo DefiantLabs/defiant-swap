@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types"
@@ -21,12 +20,17 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
-var genTokenUrl = "http://arb.defiantlabs.net:8080/api/token"
-var simulateSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimateswap"
-var simulateExactSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimatewithpools"
+// var genTokenUrl = "http://arb.defiantlabs.net:8081/api/token"
+// var simulateSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimateswap"
+// var simulateExactSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimatewithpools"
 
-var defiantRpc = "http://arb.defiantlabs.net:26657"
-var defaultChain = "osmosis-1"
+var genTokenUrl = "http://localhost:8081/api/token"
+var simulateSwapUrl = "http://localhost:8081/api/secured/estimateswap"
+var simulateExactSwapUrl = "http://localhost:8081/api/secured/estimatewithpools"
+
+// var defiantRpc = "http://arb.defiantlabs.net:26657"
+var defiantRpc = "http://localhost:26657"
+var defaultChain = "juno-1"
 
 var ledgerCmd = &cobra.Command{
 	Use:   "ledger <keyname>",
@@ -109,7 +113,7 @@ var swapCmd = &cobra.Command{
 		flagSet := cmd.Flags()
 
 		clientCtx = clientCtx.WithNodeURI(defiantRpc)
-		clientCtx = clientCtx.WithChainID(defiantRpc)
+		clientCtx = clientCtx.WithChainID(defaultChain)
 		rpcProvider := defiantRpc
 		chain := defaultChain
 
@@ -274,23 +278,7 @@ var swapCmd = &cobra.Command{
 					result.ArbitrageSwap.SimulatedSwap.Pools)
 			}
 
-			txf := query.BuildTxFactory(&clientCtx, txGas)
-			txf, txfErr := query.PrepareFactory(clientCtx, clientCtx.GetFromName(), txf)
-			cobra.CheckErr(txfErr)
-
-			txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
-			cobra.CheckErr(err)
-
-			txBuilder.SetFeeGranter(clientCtx.GetFeeGranterAddress())
-			err = tx.Sign(txf, clientCtx.GetFromName(), txBuilder, true)
-			cobra.CheckErr(err)
-
-			txBytes, err := clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
-			cobra.CheckErr(err)
-
-			tx1resp, err := clientCtx.BroadcastTxSync(txBytes)
-			cobra.CheckErr(err)
-			fmt.Printf("TX result code: %d", tx1resp.Code)
+			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas)
 		}
 
 		return err
