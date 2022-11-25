@@ -1,6 +1,6 @@
 package docs
 
-import "github.com/DefiantLabs/OsmosisArbitrageBot/query"
+import "github.com/DefiantLabs/JunoswapArbitrageCLI/query"
 
 // swagger:route POST /foobar foobar-tag swapRequest
 // Foobar does some amazing stuff.

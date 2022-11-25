@@ -1,80 +1,64 @@
 package query
 
 import (
-	"os"
+	"encoding/json"
+	"fmt"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	cosmosSdk "github.com/cosmos/cosmos-sdk/types"
-	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	osmosisParams "github.com/osmosis-labs/osmosis/v12/app/params"
-	"github.com/osmosis-labs/osmosis/v12/x/gamm/types"
 )
 
-func BuildSwapExactAmountIn(clientCtx client.Context, tokenIn cosmosSdk.Coin, tokenOutMinAmt cosmosSdk.Int, routes []SwapAmountInRoute) (cosmosSdk.Msg, error) {
+func BuildSwapExactAmountIn(
+	clientCtx client.Context,
+	amountTokenIn string,
+	inDenom string,
+	token1Or2 string,
+	routes []SwapAmountInRoute,
+	userAddr string,
+	logNameSwapType string,
+) []cosmosSdk.Msg {
+	msgs := []cosmosSdk.Msg{}
 
-	//TODO: change this to the Junoswap equivalent
-	msg := &types.MsgSwapExactAmountIn{}
+	fmt.Printf("Performing %s. Swap has %d routes\n", logNameSwapType, len(routes))
 
-	// msg := &types.MsgSwapExactAmountIn{
-	// 	Sender:            clientCtx.GetFromAddress().String(),
-	// 	Routes:            routes,
-	// 	TokenIn:           tokenIn,
-	// 	TokenOutMinAmount: tokenOutMinAmt,
-	// }
+	for i, route := range routes {
+		msg := ExecuteMsg{
+			Swap: &Swap{
+				InputToken:  token1Or2,
+				InputAmount: amountTokenIn,
+				MinOutput:   route.TokenOutAmount,
+			},
+		}
+		b, _ := json.Marshal(msg)
 
-	return msg, nil
-}
+		fmt.Printf("%s, route %d. Token in (denom): %s. Token in (junoswap pool ID): %s. Amount in: %s. Minimum amount out: %s. Pool: %s.\n",
+			logNameSwapType, i, inDenom, token1Or2, amountTokenIn, route.TokenOutAmount, route.Pool)
 
-// chain := "osmosis-1"
-// node := "https://rpc.osmosis.zone:443"
-// osmosisHomeDir := "/home/kyle/.osmosisd"
-//
-//	keyringBackend := "test"
-func GetOsmosisTxClient(encodingConfig osmosisParams.EncodingConfig, chain string, node string, osmosisHomeDir string, keyringBackend string, fromFlag string) *client.Context {
-	//encodingConfig := osmosis.MakeEncodingConfig()
-	clientCtx := client.Context{
-		ChainID:      chain,
-		NodeURI:      node,
-		KeyringDir:   osmosisHomeDir,
-		GenerateOnly: false,
+		amt, _ := cosmosSdk.NewIntFromString(amountTokenIn)
+		req := &wasm.MsgExecuteContract{
+			Sender:   userAddr,
+			Contract: route.Pool,
+			Msg:      b,
+			Funds: []cosmosSdk.Coin{
+				cosmosSdk.NewCoin("ujuno", amt),
+			},
+		}
+
+		msgs = append(msgs, req)
+
+		//there are two tokens per junoswap pool. therefore the token in for the next route is the opposite of the token out for the next route.
+		if i < len(routes)-1 {
+			if routes[i+1].TokenOutJunoswapID == "Token1" {
+				token1Or2 = "Token2"
+			} else {
+				token1Or2 = "Token1"
+			}
+		}
+
+		inDenom = route.TokenOutDenom
+		amountTokenIn = route.TokenOutAmount
 	}
 
-	ctxKeyring, krErr := client.NewKeyringFromBackend(clientCtx, keyringBackend)
-	if krErr != nil {
-		return nil
-	}
-
-	clientCtx = clientCtx.WithKeyring(ctxKeyring)
-
-	//Where node is the node RPC URI
-	rpcClient, rpcErr := client.NewClientFromNode(node)
-
-	if rpcErr != nil {
-		return nil
-	}
-
-	fromAddr, fromName, _, err := client.GetFromFields(clientCtx.Keyring, fromFlag, clientCtx.GenerateOnly)
-	if err != nil {
-		return nil
-	}
-
-	clientCtx = clientCtx.WithCodec(encodingConfig.Marshaler).
-		WithChainID(chain).
-		WithFrom(fromFlag).
-		WithFromAddress(fromAddr).
-		WithFromName(fromName).
-		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-		WithTxConfig(encodingConfig.TxConfig).
-		WithLegacyAmino(encodingConfig.Amino).
-		WithInput(os.Stdin).
-		WithAccountRetriever(authTypes.AccountRetriever{}).
-		WithBroadcastMode(flags.BroadcastAsync).
-		WithHomeDir(osmosisHomeDir).
-		WithViper("OSMOSIS").
-		WithNodeURI(node).
-		WithClient(rpcClient).
-		WithSkipConfirmation(true)
-
-	return &clientCtx
+	return msgs
 }

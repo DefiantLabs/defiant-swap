@@ -65,27 +65,8 @@ func AwaitTx(clientCtx client.Context, txHash string, timeout time.Duration) (*t
 	return txByHash, nil
 }
 
-// Gas fee is based on Osmosis fees for different numbers of pools
-// Exact fee (in uosmo) == .005 * the number below, so it is quite minimal.
 func GetGasFee(numRoutes int) uint64 {
-	switch numRoutes {
-	case 1:
-		return 135000
-	case 2:
-		return 275000
-	case 3:
-		return 275000
-	case 4:
-		return 410000
-	case 5:
-		return 410000
-	case 6:
-		return 492000
-	case 7:
-		return 574000
-	}
-
-	return 0
+	return uint64(numRoutes * 200000)
 }
 
 var (
@@ -158,7 +139,7 @@ func PrepareFactory(clientCtx client.Context, keyName string, txf tx.Factory) (t
 }
 
 func BuildTxFactory(clientContext client.Context, gas uint64) tx.Factory {
-	gasPrices := "0.005uosmo"
+	gasPrices := "0.001ujuno"
 	txf := newFactoryCLI(clientContext, gasPrices, gas)
 	return txf
 }

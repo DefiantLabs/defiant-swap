@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DefiantLabs/OsmosisArbitrageBot/query"
+	"github.com/DefiantLabs/JunoswapArbitrageCLI/query"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -106,10 +106,14 @@ var ledgerCmd = &cobra.Command{
 
 var swapCmd = &cobra.Command{
 	Use:   "swap",
-	Short: "Performs a swap on Osmosis, optimizing rates for users",
+	Short: "Performs a swap on Juno, optimizing rates for users",
 	Long:  `Optimizes swaps by capturing arbitrage revenue that would normally go to bots. This is a free service provided by Defiant Labs`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		clientCtx, _ := client.GetClientTxContext(cmd)
+		clientCtx, err := client.GetClientTxContext(cmd)
+		if err != nil {
+			fmt.Println(err.Error())
+			cobra.CheckErr(err)
+		}
 		flagSet := cmd.Flags()
 
 		clientCtx = clientCtx.WithNodeURI(defiantRpc)
@@ -133,8 +137,23 @@ var swapCmd = &cobra.Command{
 		cobra.CheckErr(rpcErr)
 		clientCtx = clientCtx.WithClient(rpcClient)
 
+		from, _ := cmd.Flags().GetString(flags.FlagFrom)
+		if from != "" {
+			fmt.Printf("From: %s\n", from)
+			//from, _ := flagSet.GetString(flags.FlagFrom)
+			// fromAddr, fromName, keyType, err := GetFromFields(clientCtx.Keyring, from, clientCtx.GenerateOnly)
+			// if err != nil {
+			// 	return clientCtx, err
+			// }
+
+			//clientCtx = clientCtx.WithFrom(from).WithFromAddress(fromAddr).WithFromName(fromName)
+		}
+
 		address := clientCtx.GetFromAddress().String()
 		fmt.Printf("Address: %s\n", address)
+		if address == "" {
+			return errors.New("must specify user account address")
+		}
 		jwt := query.JWT{}
 		jwtReq := query.JWTRequest{Address: address}
 
@@ -255,27 +274,32 @@ var swapCmd = &cobra.Command{
 		if err == nil {
 			msgs := []types.Msg{}
 
-			msgUserSwap, err := query.BuildSwapExactAmountIn(clientCtx, result.SimulatedUserSwap.TokenIn, result.SimulatedUserSwap.TokenOutMinAmount, result.SimulatedUserSwap.Routes)
+			msgUserSwap := query.BuildSwapExactAmountIn(
+				clientCtx,
+				result.SimulatedUserSwap.TokenIn.Amount.String(),
+				result.SimulatedUserSwap.TokenIn.Denom,
+				result.SimulatedUserSwap.TokenInJunoswapID,
+				result.SimulatedUserSwap.Routes,
+				address,
+				"user swap",
+			)
 			cobra.CheckErr(err)
-			msgs = append(msgs, msgUserSwap)
+			msgs = append(msgs, msgUserSwap...)
 			txGas := query.GetGasFee(len(result.SimulatedUserSwap.Routes))
 
-			fmt.Printf("Performing user's swap. Token in: %s. Minimum amount out: %s. Pool(s) %s.\n",
-				result.SimulatedUserSwap.TokenIn,
-				result.SimulatedUserSwap.TokenOutMinAmount,
-				result.SimulatedUserSwap.Pools)
-
 			if result.HasArbitrageOpportunity {
-				arbSwap, err := query.BuildSwapExactAmountIn(clientCtx, result.ArbitrageSwap.SimulatedSwap.TokenIn,
-					result.ArbitrageSwap.SimulatedSwap.TokenOutMinAmount, result.ArbitrageSwap.SimulatedSwap.Routes)
+				arbSwapMsgs := query.BuildSwapExactAmountIn(
+					clientCtx,
+					result.ArbitrageSwap.SimulatedSwap.TokenIn.Amount.String(),
+					result.ArbitrageSwap.SimulatedSwap.TokenIn.Denom,
+					result.ArbitrageSwap.SimulatedSwap.TokenInJunoswapID,
+					result.ArbitrageSwap.SimulatedSwap.Routes,
+					address,
+					"arbitrage swap",
+				)
 				cobra.CheckErr(err)
-				msgs = append(msgs, arbSwap)
+				msgs = append(msgs, arbSwapMsgs...)
 				txGas = txGas + query.GetGasFee(len(result.ArbitrageSwap.SimulatedSwap.Routes))
-
-				fmt.Printf("Performing arbitrage swap. Token in: %s. Minimum amount out: %s. Pool(s) %s.\n",
-					result.ArbitrageSwap.SimulatedSwap.TokenIn,
-					result.ArbitrageSwap.SimulatedSwap.TokenOutMinAmount,
-					result.ArbitrageSwap.SimulatedSwap.Pools)
 			}
 
 			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas)

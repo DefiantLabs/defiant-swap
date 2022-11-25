@@ -3,17 +3,28 @@ package cmd
 import (
 	"os"
 
+	app "github.com/CosmosContracts/juno/v11/app"
+	params "github.com/CosmosContracts/juno/v11/app/params"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	osmosis "github.com/osmosis-labs/osmosis/v12/app"
-	"github.com/osmosis-labs/osmosis/v12/app/params"
 	"github.com/spf13/cobra"
 )
 
+// MakeEncodingConfig creates an EncodingConfig for testing
+func MakeEncodingConfig() params.EncodingConfig {
+	encodingConfig := params.MakeEncodingConfig()
+	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	app.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	return encodingConfig
+}
+
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
-	encodingConfig := osmosis.MakeEncodingConfig()
+	encodingConfig := MakeEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -22,12 +33,12 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastBlock).
-		WithHomeDir(osmosis.DefaultNodeHome).
-		WithViper("OSMOSIS")
+		WithHomeDir(os.ExpandEnv("$HOME/") + ".juno").
+		WithViper("JUNO")
 
 	rootCmd := &cobra.Command{
 		Use:   "defiant-swap",
-		Short: "A CLI tool for Osmosis swaps that captures arbitrage to maximize swap results",
+		Short: "A CLI tool for Juno swaps that captures arbitrage to maximize swap results",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {

@@ -39,12 +39,23 @@ type SimulatedSwapExactPoolsRequest struct {
 	SkipWalletFundsCheck bool
 }
 
+type ExecuteMsg struct {
+	Swap *Swap `json:"swap,omitempty"`
+}
+
+type Swap struct {
+	InputToken  string `json:"input_token"` //Token1 or Token2
+	InputAmount string `json:"input_amount"`
+	MinOutput   string `json:"min_output"`
+}
+
 type SwapAmountInRoute struct {
 	Pool          string `json:"pool_id,omitempty" yaml:"pool_id"`
 	TokenOutDenom string `json:"token_out_denom,omitempty" yaml:"token_out_denom"`
 	//When you swap on Junoswap, the smart contracts require that you specify either "Token1" or "Token2"
 	//as the input token (instead of the token's denomination).
 	TokenOutJunoswapID string `json:"token_out_junoswap_id,omitempty" yaml:"token_out_junoswap_id"`
+	TokenOutAmount     string `json:"token_out_amount,omitempty"` //the amount out (estimated) for the results of the swap for this particular route
 }
 
 // Results of the simulation
@@ -72,7 +83,7 @@ type FooBarResponse struct {
 type SimulatedSwap struct {
 	TokenIn                cosmosTypes.Coin
 	TokenInJunoswapID      string `json:"token_in_junoswap_id,omitempty"`
-	TokenOutMinAmount      cosmosTypes.Int
+	TokenOutMinAmount      string `json:"token_out_min_amount,omitempty"`
 	Pools                  string
 	Routes                 []SwapAmountInRoute `json:"routes,omitempty"`
 	TokenOutAmount         cosmosTypes.Int
