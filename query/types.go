@@ -43,6 +43,25 @@ type ExecuteMsg struct {
 	Swap *Swap `json:"swap,omitempty"`
 }
 
+type JunoswapInstantiateContract struct {
+	Token1Denom          *Token `json:"token1_denom"`
+	Token2Denom          *Token `json:"token2_denom"`
+	LpTokenCodeID        int    `json:"lp_token_code_id"`
+	ProtocolFeeRecipient string `json:"protocol_fee_recipient"`
+	ProtocolFeePercent   string `json:"protocol_fee_percent"`
+	LpFeePercent         string `json:"lp_fee_percent"`
+}
+
+// Only one of "Native,CW20" will be set.
+type Token struct {
+	Native   string `json:"native,omitempty"`
+	CW20     string `json:"cw20,omitempty"`
+	Decimals int
+}
+
+//{ "token1_denom": {"native": "ujunox" }, "token2_denom": {"native": "uusdcx" }, "lp_token_code_id": 2658,
+//"protocol_fee_recipient": "juno15eft7zal7mg3e8enpg94el6lwnlhsxrcu8025v", "protocol_fee_percent": "0.2", "lp_fee_percent": "0.1"}
+
 type Swap struct {
 	InputToken  string `json:"input_token"` //Token1 or Token2
 	InputAmount string `json:"input_amount"`

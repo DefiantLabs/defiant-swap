@@ -302,7 +302,8 @@ var swapCmd = &cobra.Command{
 				txGas = txGas + query.GetGasFee(len(result.ArbitrageSwap.SimulatedSwap.Routes))
 			}
 
-			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas)
+			gasPrices := "0.001ujuno"
+			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas, gasPrices)
 		}
 
 		return err

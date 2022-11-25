@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func SubmitTxAwaitResponse(clientCtx client.Context, msgs []sdk.Msg, txGas uint64) {
-	txf := BuildTxFactory(clientCtx, txGas)
+func SubmitTxAwaitResponse(clientCtx client.Context, msgs []sdk.Msg, txGas uint64, gasPrices string) {
+	txf := BuildTxFactory(clientCtx, txGas, gasPrices)
 	txf, txfErr := PrepareFactory(clientCtx, clientCtx.GetFromName(), txf)
 	cobra.CheckErr(txfErr)
 
@@ -138,8 +138,7 @@ func PrepareFactory(clientCtx client.Context, keyName string, txf tx.Factory) (t
 	return txf, nil
 }
 
-func BuildTxFactory(clientContext client.Context, gas uint64) tx.Factory {
-	gasPrices := "0.001ujuno"
+func BuildTxFactory(clientContext client.Context, gas uint64, gasPrices string) tx.Factory {
 	txf := newFactoryCLI(clientContext, gasPrices, gas)
 	return txf
 }
