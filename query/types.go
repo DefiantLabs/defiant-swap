@@ -54,9 +54,8 @@ type JunoswapInstantiateContract struct {
 
 // Only one of "Native,CW20" will be set.
 type Token struct {
-	Native   string `json:"native,omitempty"`
-	CW20     string `json:"cw20,omitempty"`
-	Decimals int
+	Native string `json:"native,omitempty"`
+	// CW20   string `json:"cw20,omitempty"`
 }
 
 //{ "token1_denom": {"native": "ujunox" }, "token2_denom": {"native": "uusdcx" }, "lp_token_code_id": 2658,

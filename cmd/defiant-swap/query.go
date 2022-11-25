@@ -268,6 +268,17 @@ var swapCmd = &cobra.Command{
 			)
 		}
 
+		fmt.Printf("keyringDir: %s\n", clientCtx.KeyringDir)
+		kri, err := clientCtx.Keyring.List()
+		cobra.CheckErr(err)
+
+		fmt.Printf("Listing keyring keys, %d keys total\n", len(kri))
+		counter := 1
+		for _, v := range kri {
+			fmt.Printf("(%d/%d)\n", counter, len(kri))
+			fmt.Printf("Name: %s\nType: %s\nAddress: %s\nPubkey: %s\n", v.GetName(), v.GetType(), v.GetAddress(), v.GetPubKey())
+		}
+
 		err = Confirm("Proceed with the swap?")
 		cobra.CheckErr(err)
 
@@ -301,9 +312,9 @@ var swapCmd = &cobra.Command{
 				msgs = append(msgs, arbSwapMsgs...)
 				txGas = txGas + query.GetGasFee(len(result.ArbitrageSwap.SimulatedSwap.Routes))
 			}
-
-			gasPrices := "0.001ujuno"
-			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas, gasPrices)
+			gasPrices := 0.001
+			total := txGas * uint64(gasPrices)
+			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas, "0.001ujuno", fmt.Sprintf("%d%s", total, "ujuno"))
 		}
 
 		return err

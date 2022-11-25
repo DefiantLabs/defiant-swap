@@ -3,28 +3,17 @@ package cmd
 import (
 	"os"
 
-	app "github.com/CosmosContracts/juno/v11/app"
 	params "github.com/CosmosContracts/juno/v11/app/params"
+	"github.com/DefiantLabs/JunoswapArbitrageCLI/query"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/spf13/cobra"
 )
 
-// MakeEncodingConfig creates an EncodingConfig for testing
-func MakeEncodingConfig() params.EncodingConfig {
-	encodingConfig := params.MakeEncodingConfig()
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	app.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	return encodingConfig
-}
-
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := query.MakeEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
