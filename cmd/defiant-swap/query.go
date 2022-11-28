@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DefiantLabs/JunoswapArbitrageCLI/query"
+	"github.com/DefiantLabs/OsmosisArbitrageCLI/query"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -20,17 +20,12 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
-// var genTokenUrl = "http://arb.defiantlabs.net:8081/api/token"
-// var simulateSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimateswap"
-// var simulateExactSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimatewithpools"
+var genTokenUrl = "http://arb.defiantlabs.net:8081/api/token"
+var simulateSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimateswap"
+var simulateExactSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimatewithpools"
 
-var genTokenUrl = "http://localhost:8081/api/token"
-var simulateSwapUrl = "http://localhost:8081/api/secured/estimateswap"
-var simulateExactSwapUrl = "http://localhost:8081/api/secured/estimatewithpools"
-
-// var defiantRpc = "http://arb.defiantlabs.net:26657"
-var defiantRpc = "http://localhost:26657"
-var defaultChain = "juno-1"
+var defiantRpc = "http://arb.defiantlabs.net:26657"
+var defaultChain = "osmosis-1"
 
 var ledgerCmd = &cobra.Command{
 	Use:   "ledger <keyname>",

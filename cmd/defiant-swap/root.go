@@ -4,7 +4,7 @@ import (
 	"os"
 
 	params "github.com/CosmosContracts/juno/v11/app/params"
-	"github.com/DefiantLabs/JunoswapArbitrageCLI/query"
+	"github.com/DefiantLabs/OsmosisArbitrageCLI/query"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,8 +22,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastBlock).
-		WithHomeDir(os.ExpandEnv("$HOME/") + ".juno").
-		WithViper("JUNO")
+		WithHomeDir(os.ExpandEnv("$HOME/") + ".osmosisd").
+		WithViper("OSMOSIS")
 
 	rootCmd := &cobra.Command{
 		Use:   "defiant-swap",

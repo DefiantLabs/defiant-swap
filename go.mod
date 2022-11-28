@@ -1,4 +1,4 @@
-module github.com/DefiantLabs/JunoswapArbitrageCLI
+module github.com/DefiantLabs/OsmosisArbitrageCLI
 
 go 1.18
 

@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 
-	cmd "github.com/DefiantLabs/JunoswapArbitrageCLI/cmd/defiant-swap"
+	cmd "github.com/DefiantLabs/OsmosisArbitrageCLI/cmd/defiant-swap"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
-	Bech32PrefixAccAddr = "juno"
+	Bech32PrefixAccAddr = "osmo"
 	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key.
 	Bech32PrefixAccPub = Bech32PrefixAccAddr + "pub"
 	// Bech32PrefixValAddr defines the Bech32 prefix of a validator's operator address.
@@ -29,7 +29,7 @@ func main() {
 	config.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
 
 	rootCmd, _ := cmd.NewRootCmd()
-	if err := svrcmd.Execute(rootCmd, os.ExpandEnv("$HOME/")+".juno"); err != nil {
+	if err := svrcmd.Execute(rootCmd, os.ExpandEnv("$HOME/")+".osmosisd"); err != nil {
 		os.Exit(1)
 	}
 }
