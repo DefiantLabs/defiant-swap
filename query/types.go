@@ -91,13 +91,6 @@ type ArbitrageSwap struct {
 	EstimatedProfitBaseAmount    string         // e.g. 11.64
 }
 
-// FooBarResponse represents body of FooBar response.
-type FooBarResponse struct {
-	Baz struct {
-		Prop string `json:"prop"`
-	} `json:"baz"`
-}
-
 type SimulatedSwap struct {
 	TokenIn                cosmosTypes.Coin
 	TokenInJunoswapID      string `json:"token_in_junoswap_id,omitempty"`
