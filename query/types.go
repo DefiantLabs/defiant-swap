@@ -2,7 +2,6 @@ package query
 
 import (
 	cosmosTypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/osmosis-labs/osmosis/v12/x/gamm/types"
 )
 
 type JWTRequest struct {
@@ -29,7 +28,7 @@ type SimulatedSwapRequest struct {
 	SkipWalletFundsCheck bool
 }
 
-//The swap that we are simulating, with the exact pools to trade through
+// The swap that we are simulating, with the exact pools to trade through
 type SimulatedSwapExactPoolsRequest struct {
 	TokenInDenom         string
 	TokenInAmount        string
@@ -40,9 +39,41 @@ type SimulatedSwapExactPoolsRequest struct {
 	SkipWalletFundsCheck bool
 }
 
+type ExecuteMsg struct {
+	Swap *Swap `json:"swap,omitempty"`
+}
+
+type JunoswapInstantiateContract struct {
+	Token1Denom          *Token `json:"token1_denom"`
+	Token2Denom          *Token `json:"token2_denom"`
+	LpTokenCodeID        int    `json:"lp_token_code_id"`
+	ProtocolFeeRecipient string `json:"protocol_fee_recipient"`
+	ProtocolFeePercent   string `json:"protocol_fee_percent"`
+	LpFeePercent         string `json:"lp_fee_percent"`
+}
+
+// Only one of "Native,CW20" will be set.
+type Token struct {
+	Native string `json:"native,omitempty"`
+	// CW20   string `json:"cw20,omitempty"`
+}
+
+//{ "token1_denom": {"native": "ujunox" }, "token2_denom": {"native": "uusdcx" }, "lp_token_code_id": 2658,
+//"protocol_fee_recipient": "juno15eft7zal7mg3e8enpg94el6lwnlhsxrcu8025v", "protocol_fee_percent": "0.2", "lp_fee_percent": "0.1"}
+
+type Swap struct {
+	InputToken  string `json:"input_token"` //Token1 or Token2
+	InputAmount string `json:"input_amount"`
+	MinOutput   string `json:"min_output"`
+}
+
 type SwapAmountInRoute struct {
 	Pool          string `json:"pool_id,omitempty" yaml:"pool_id"`
 	TokenOutDenom string `json:"token_out_denom,omitempty" yaml:"token_out_denom"`
+	//When you swap on Junoswap, the smart contracts require that you specify either "Token1" or "Token2"
+	//as the input token (instead of the token's denomination).
+	TokenOutJunoswapID string `json:"token_out_junoswap_id,omitempty" yaml:"token_out_junoswap_id"`
+	TokenOutAmount     string `json:"token_out_amount,omitempty"` //the amount out (estimated) for the results of the swap for this particular route
 }
 
 // Results of the simulation
@@ -60,18 +91,12 @@ type ArbitrageSwap struct {
 	EstimatedProfitBaseAmount    string         // e.g. 11.64
 }
 
-// FooBarResponse represents body of FooBar response.
-type FooBarResponse struct {
-	Baz struct {
-		Prop string `json:"prop"`
-	} `json:"baz"`
-}
-
 type SimulatedSwap struct {
 	TokenIn                cosmosTypes.Coin
-	TokenOutMinAmount      cosmosTypes.Int
+	TokenInJunoswapID      string `json:"token_in_junoswap_id,omitempty"`
+	TokenOutMinAmount      string `json:"token_out_min_amount,omitempty"`
 	Pools                  string
-	Routes                 types.SwapAmountInRoutes `json:"routes,omitempty"`
+	Routes                 []SwapAmountInRoute `json:"routes,omitempty"`
 	TokenOutAmount         cosmosTypes.Int
 	TokenOutDenom          string // one of the 'denom' from asset lists at https:// github.com/osmosis-labs/assetlists/tree/main/osmosis-1
 	TokenInSymbol          string
