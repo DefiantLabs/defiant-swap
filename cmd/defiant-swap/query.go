@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types"
@@ -274,36 +275,46 @@ var swapCmd = &cobra.Command{
 		if err == nil {
 			msgs := []types.Msg{}
 
-			msgUserSwap := query.BuildSwapExactAmountIn(
-				clientCtx,
-				result.SimulatedUserSwap.TokenIn.Amount.String(),
-				result.SimulatedUserSwap.TokenIn.Denom,
-				result.SimulatedUserSwap.TokenInJunoswapID,
-				result.SimulatedUserSwap.Routes,
-				address,
-				"user swap",
-			)
+			msgUserSwap, err := query.BuildSwapExactAmountIn(clientCtx, result.SimulatedUserSwap.TokenIn, result.SimulatedUserSwap.TokenOutMinAmount, result.SimulatedUserSwap.Routes)
 			cobra.CheckErr(err)
-			msgs = append(msgs, msgUserSwap...)
+			msgs = append(msgs, msgUserSwap)
 			txGas := query.GetGasFee(len(result.SimulatedUserSwap.Routes))
 
+			fmt.Printf("Performing user's swap. Token in: %s. Minimum amount out: %s. Pool(s) %s.\n",
+				result.SimulatedUserSwap.TokenIn,
+				result.SimulatedUserSwap.TokenOutMinAmount,
+				result.SimulatedUserSwap.Pools)
+
 			if result.HasArbitrageOpportunity {
-				arbSwapMsgs := query.BuildSwapExactAmountIn(
-					clientCtx,
-					result.ArbitrageSwap.SimulatedSwap.TokenIn.Amount.String(),
-					result.ArbitrageSwap.SimulatedSwap.TokenIn.Denom,
-					result.ArbitrageSwap.SimulatedSwap.TokenInJunoswapID,
-					result.ArbitrageSwap.SimulatedSwap.Routes,
-					address,
-					"arbitrage swap",
-				)
+				arbSwap, err := query.BuildSwapExactAmountIn(clientCtx, result.ArbitrageSwap.SimulatedSwap.TokenIn,
+					result.ArbitrageSwap.SimulatedSwap.TokenOutMinAmount, result.ArbitrageSwap.SimulatedSwap.Routes)
 				cobra.CheckErr(err)
-				msgs = append(msgs, arbSwapMsgs...)
+				msgs = append(msgs, arbSwap)
 				txGas = txGas + query.GetGasFee(len(result.ArbitrageSwap.SimulatedSwap.Routes))
+
+				fmt.Printf("Performing arbitrage swap. Token in: %s. Minimum amount out: %s. Pool(s) %s.\n",
+					result.ArbitrageSwap.SimulatedSwap.TokenIn,
+					result.ArbitrageSwap.SimulatedSwap.TokenOutMinAmount,
+					result.ArbitrageSwap.SimulatedSwap.Pools)
 			}
-			gasPrices := 0.001
-			total := txGas * uint64(gasPrices)
-			query.SubmitTxAwaitResponse(clientCtx, msgs, txGas, "0.001ujuno", fmt.Sprintf("%d%s", total, "ujuno"))
+
+			txf := query.BuildTxFactory(clientCtx, txGas)
+			txf, txfErr := query.PrepareFactory(clientCtx, clientCtx.GetFromName(), txf)
+			cobra.CheckErr(txfErr)
+
+			txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
+			cobra.CheckErr(err)
+
+			txBuilder.SetFeeGranter(clientCtx.GetFeeGranterAddress())
+			err = tx.Sign(txf, clientCtx.GetFromName(), txBuilder, true)
+			cobra.CheckErr(err)
+
+			txBytes, err := clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
+			cobra.CheckErr(err)
+
+			tx1resp, err := clientCtx.BroadcastTxSync(txBytes)
+			cobra.CheckErr(err)
+			fmt.Printf("TX result code: %d", tx1resp.Code)
 		}
 
 		return err

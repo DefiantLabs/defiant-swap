@@ -6,53 +6,20 @@ import (
 	"os"
 	"time"
 
-	"github.com/CosmWasm/wasmd/app"
-	params "github.com/CosmosContracts/juno/v11/app/params"
 	"github.com/avast/retry-go"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	osmosis "github.com/osmosis-labs/osmosis/v12/app"
 	"github.com/spf13/cobra"
 )
 
-var (
-	Bech32PrefixAccAddr = "juno"
-	// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key.
-	Bech32PrefixAccPub = Bech32PrefixAccAddr + "pub"
-	// Bech32PrefixValAddr defines the Bech32 prefix of a validator's operator address.
-	Bech32PrefixValAddr = Bech32PrefixAccAddr + "valoper"
-	// Bech32PrefixValPub defines the Bech32 prefix of a validator's operator public key.
-	Bech32PrefixValPub = Bech32PrefixAccAddr + "valoperpub"
-	// Bech32PrefixConsAddr defines the Bech32 prefix of a consensus node address.
-	Bech32PrefixConsAddr = Bech32PrefixAccAddr + "valcons"
-	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key.
-	Bech32PrefixConsPub = Bech32PrefixAccAddr + "valconspub"
-)
-
-func InitAddressPrefixes() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(Bech32PrefixAccAddr, Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(Bech32PrefixValAddr, Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
-}
-
-// MakeEncodingConfig creates an EncodingConfig for testing
-func MakeEncodingConfig() params.EncodingConfig {
-	encodingConfig := params.MakeEncodingConfig()
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	app.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	return encodingConfig
-}
-
 func GetTxClient(chain string, node string, home string, keyringBackend string, fromFlag string) client.Context {
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := osmosis.MakeEncodingConfig()
 	clientCtx := client.Context{
 		ChainID:      chain,
 		NodeURI:      node,
@@ -74,7 +41,7 @@ func GetTxClient(chain string, node string, home string, keyringBackend string, 
 		return client.Context{}
 	}
 
-	fromAddr, fromName, _, err := client.GetFromFields(clientCtx, clientCtx.Keyring, fromFlag)
+	fromAddr, fromName, _, err := client.GetFromFields(clientCtx.Keyring, fromFlag, false)
 	if err != nil {
 		return client.Context{}
 	}
@@ -91,7 +58,7 @@ func GetTxClient(chain string, node string, home string, keyringBackend string, 
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastAsync).
 		WithHomeDir(home).
-		WithViper("JUNO").
+		WithViper("OSMOSIS").
 		WithNodeURI(node).
 		WithKeyringDir(home).
 		WithClient(rpcClient).
@@ -101,7 +68,7 @@ func GetTxClient(chain string, node string, home string, keyringBackend string, 
 }
 
 func SubmitTxAwaitResponse(clientCtx client.Context, msgs []sdk.Msg, gas uint64, gasPrices string, fees string) {
-	txf := BuildTxFactory(clientCtx, gas, gasPrices, fees)
+	txf := BuildTxFactory(clientCtx, gas)
 	txf, txfErr := PrepareFactory(clientCtx, clientCtx.GetFromName(), txf)
 	cobra.CheckErr(txfErr)
 
@@ -232,16 +199,15 @@ func PrepareFactory(clientCtx client.Context, keyName string, txf tx.Factory) (t
 	return txf, nil
 }
 
-func BuildTxFactory(clientContext client.Context, gas uint64, gasPrices string, fees string) tx.Factory {
-	txf := newFactoryCLI(clientContext, gas, gasPrices, fees)
+func BuildTxFactory(clientContext client.Context, gas uint64) tx.Factory {
+	gasPrices := "0.005uosmo"
+	txf := newFactoryCLI(clientContext, gasPrices, gas)
 	return txf
 }
 
 // NewFactoryCLI creates a new Factory.
-func newFactoryCLI(clientCtx client.Context, gas uint64, gasPrices string, fees string) tx.Factory {
+func newFactoryCLI(clientCtx client.Context, gasPrices string, gas uint64) tx.Factory {
 	f := tx.Factory{}
-
-	fmt.Printf("Chain ID: %s, keyring: %+v, account retriever: %+v, txconfig: %+v\n", clientCtx.ChainID, clientCtx.Keyring, clientCtx.AccountRetriever, clientCtx.TxConfig)
 
 	f = f.WithChainID(clientCtx.ChainID)
 	f = f.WithKeybase(clientCtx.Keyring)
@@ -249,8 +215,7 @@ func newFactoryCLI(clientCtx client.Context, gas uint64, gasPrices string, fees 
 	f = f.WithTxConfig(clientCtx.TxConfig)
 	f = f.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 	f = f.WithGas(gas)
-	//f = f.WithGasPrices(gasPrices)
-	f = f.WithFees(fees)
+	f = f.WithGasPrices(gasPrices)
 
 	if clientCtx.SignModeStr == flags.SignModeLegacyAminoJSON {
 		//fmt.Println("Default sign-mode 'direct' not supported by Ledger, using sign-mode 'amino-json'.")
