@@ -24,7 +24,7 @@ var genTokenUrl = "http://arb.defiantlabs.net:8081/api/token"
 var simulateSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimateswap"
 var simulateExactSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimatewithpools"
 
-var defiantRpc = "http://arb.defiantlabs.net:26657"
+var rpcServer = "https://rpc.osmosis.zone:443"
 var defaultChain = "osmosis-1"
 
 var ledgerCmd = &cobra.Command{
@@ -101,7 +101,7 @@ var ledgerCmd = &cobra.Command{
 
 var swapCmd = &cobra.Command{
 	Use:   "swap",
-	Short: "Performs a swap on Juno, optimizing rates for users",
+	Short: "Performs a swap on Osmosis, optimizing rates for users",
 	Long:  `Optimizes swaps by capturing arbitrage revenue that would normally go to bots. This is a free service provided by Defiant Labs`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		clientCtx, err := client.GetClientTxContext(cmd)
@@ -111,9 +111,15 @@ var swapCmd = &cobra.Command{
 		}
 		flagSet := cmd.Flags()
 
-		clientCtx = clientCtx.WithNodeURI(defiantRpc)
+		if localhost {
+			genTokenUrl = "http://localhost:8081/api/token"
+			simulateSwapUrl = "http://localhost:8081/api/secured/estimateswap"
+			simulateExactSwapUrl = "http://localhost:8081/api/secured/estimatewithpools"
+		}
+
+		clientCtx = clientCtx.WithNodeURI(rpcServer)
 		clientCtx = clientCtx.WithChainID(defaultChain)
-		rpcProvider := defiantRpc
+		rpcProvider := rpcServer
 		chain := defaultChain
 
 		node, nErr := flagSet.GetString("node")
@@ -131,18 +137,6 @@ var swapCmd = &cobra.Command{
 		rpcClient, rpcErr := client.NewClientFromNode(rpcProvider)
 		cobra.CheckErr(rpcErr)
 		clientCtx = clientCtx.WithClient(rpcClient)
-
-		from, _ := cmd.Flags().GetString(flags.FlagFrom)
-		if from != "" {
-			fmt.Printf("From: %s\n", from)
-			//from, _ := flagSet.GetString(flags.FlagFrom)
-			// fromAddr, fromName, keyType, err := GetFromFields(clientCtx.Keyring, from, clientCtx.GenerateOnly)
-			// if err != nil {
-			// 	return clientCtx, err
-			// }
-
-			//clientCtx = clientCtx.WithFrom(from).WithFromAddress(fromAddr).WithFromName(fromName)
-		}
 
 		address := clientCtx.GetFromAddress().String()
 		fmt.Printf("Address: %s\n", address)
@@ -327,6 +321,7 @@ var (
 	amountOut       string // minimum amount you'll receive
 	verifyFunds     bool
 	hasPartnerCode  bool
+	localhost       bool
 
 	// for ledger
 	delete bool
@@ -340,6 +335,7 @@ func init() {
 	swapCmd.Flags().StringVar(&amountOut, "min-amount-out", "", "The minimum amount of the token you want to receive, format is the same as amount-in")
 	swapCmd.Flags().BoolVar(&verifyFunds, "verify-funds", true, "Check that the user's wallet contains enough funds for the trade. Turn off to simulate regardless of funds.")
 	swapCmd.Flags().BoolVar(&hasPartnerCode, "partner", false, "Will prompt for partner secret if --partner=true. Unlocks unlimited API requests.")
+	swapCmd.Flags().BoolVar(&localhost, "localhost", false, "Local testing (recommended for development only).")
 
 	swapCmd.Flags().StringVar(&pools, "pools", "", "comma separated list of pools to swap through")
 	swapCmd.Flags().StringVar(&denoms, "denoms", "", "comma separated list of denoms OUT to swap through")
