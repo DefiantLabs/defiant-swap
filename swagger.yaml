@@ -2,61 +2,310 @@ basePath: /
 consumes:
     - application/json
 definitions:
-    result:
+    ArbitrageSwap:
+        properties:
+            EstimatedProfitBaseAmount:
+                description: e.g. 165.1269
+                example: "165.1269"
+                type: string
+            EstimatedProfitHumanReadable:
+                description: e.g. 165.1269 OSMO
+                example: 165.1269 OSMO
+                type: string
+            SimulatedSwap:
+                $ref: '#/definitions/SimulatedSwap'
+        type: object
+        x-go-package: github.com/DefiantLabs/OsmosisArbitrageCLI/query
+    Coin:
+        description: |-
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        properties:
+            amount:
+                $ref: '#/definitions/Int'
+            denom:
+                type: string
+                x-go-name: Denom
+        title: Coin defines a token with a denomination and an amount.
+        type: object
+        x-go-package: github.com/cosmos/cosmos-sdk/types
+    Int:
+        description: |-
+            Int wraps big.Int with a 257 bit range bound
+            Checks overflow, underflow and division by zero
+            Exists in range from -(2^256 - 1) to 2^256 - 1
+        type: object
+        x-go-package: github.com/cosmos/cosmos-sdk/types
+    SimulatedSwap:
+        properties:
+            AmountOutHumanReadable:
+                example: 165.1269 OSMO
+                type: string
+            BaseAmount:
+                example: "165.1269"
+                type: string
+            Pools:
+                description: Comma separated list of pools that will be traded through (only for human readable info)
+                type: string
+            PriceImpact:
+                description: Amount this trade impacts the pool prices. For example, .025 would mean a 2.5% impact.
+                example: 0.025
+                format: double
+                type: number
+            TokenIn:
+                $ref: '#/definitions/Coin'
+            TokenInSymbol:
+                description: One of the 'symbol' from asset lists at https:// github.com/osmosis-labs/assetlists/tree/main/osmosis-1
+                type: string
+            TokenOutAmount:
+                $ref: '#/definitions/Int'
+            TokenOutDenom:
+                description: One of the 'denom' from asset lists at https:// github.com/osmosis-labs/assetlists/tree/main/osmosis-1
+                type: string
+            TokenOutMinAmount:
+                $ref: '#/definitions/Int'
+            TokenOutSymbol:
+                description: One of the 'symbol' from asset lists at https:// github.com/osmosis-labs/assetlists/tree/main/osmosis-1
+                type: string
+            routes:
+                $ref: '#/definitions/SwapAmountInRoutes'
+        type: object
+        x-go-package: github.com/DefiantLabs/OsmosisArbitrageCLI/query
+    SimulatedSwapResult:
         description: Results of the simulation
-        x-go-name: SimulatedSwapResult
-        x-go-package: github.com/DefiantLabs/OsmosisArbitrageBot/query
+        properties:
+            HasArbitrageOpportunity:
+                description: Whether or not the user's swap will cause arbitrage once executed on chain
+                type: boolean
+            arbitrageSwap:
+                $ref: '#/definitions/ArbitrageSwap'
+            error:
+                description: if there was some issue detected on the server
+                type: string
+                x-go-name: Error
+            userSwap:
+                $ref: '#/definitions/SimulatedSwap'
+        type: object
+        x-go-package: github.com/DefiantLabs/OsmosisArbitrageCLI/query
+    SwapAmountInRoute:
+        description: ===================== MsgSwapExactAmountIn
+        properties:
+            pool_id:
+                format: uint64
+                type: integer
+                x-go-name: PoolId
+            token_out_denom:
+                type: string
+                x-go-name: TokenOutDenom
+        type: object
+        x-go-package: github.com/osmosis-labs/osmosis/v12/x/gamm/types
+    SwapAmountInRoutes:
+        items:
+            $ref: '#/definitions/SwapAmountInRoute'
+        type: array
+        x-go-package: github.com/osmosis-labs/osmosis/v12/x/gamm/types
 host: arb.defiantlabs.net:8080
 info:
     description: Estimate user swaps ahead of time, and provide arbitrage trade information.
     title: defiant-swap.
     version: 1.0.0
 paths:
-    /foobar:
+    /api/secured/estimateswap:
         post:
             operationId: swapRequest
             parameters:
-                - in: query
-                  name: token_in
+                - description: e.g. OSMO or JUNO; must match the 'symbol' at https://github.com/osmosis-labs/assetlists/blob/main/osmosis-1/osmosis-1.assetlist.json.
+                  example: JUNO
+                  in: query
+                  name: TokenInSymbol
                   type: string
-                  x-go-name: TokenInSymbol
-                - in: query
+                - description: Amount corresponding to the given symbol (NOT the base denomination). This is what a user would type into the DEX frontend.
+                  example: "100"
+                  in: query
                   name: TokenInAmount
                   type: string
-                - in: query
+                - description: e.g. OSMO or JUNO; must match the 'symbol' at https://github.com/osmosis-labs/assetlists/blob/main/osmosis-1/osmosis-1.assetlist.json.
+                  example: OSMO
+                  in: query
                   name: TokenOutSymbol
                   type: string
-                - in: query
+                - description: If trading 100 JUNO and you want at least 165 OSMO back, this would simply be set to "165".
+                  example: "165"
+                  in: query
                   name: TokenOutMinAmount
                   type: string
-                - in: query
+                - description: The swap simulation will be performed as if it is for this wallet.
+                  example: osmo1njsthsamgkzdqqg4awj7y6rxtuk3q26t2t8md2
+                  in: query
                   name: UserWallet
                   type: string
-                - in: query
+                - description: |-
+                    On Osmosis, you must specify a wallet with at least 100 OSMO in it. If this param is left empty, the UserWallet will be used instead.
+                    NOTE: At present, on Osmosis, only arbing with the OSMO token is supported. As we will support additional tokens in the future, we use
+                    this parameter so that callers can indicate which arbitrage tokens they want to use.
+                  example: osmo14mmus5h7m6vkp0pteks8wawaj4wf3sx7fy3s2r
+                  in: query
                   name: ArbitrageWallet
                   type: string
                 - description: |-
-                    If you ask to simulate a trade of 100 JUNO for X OSMO, but your wallet doesn't have at least 100 JUNO,
-                    it will cause an error. But if you specify "--skip-checks" it will simulate for you anyway instead of causing an error.
+                    Setting SkipWalletFundsCheck to true will run the simulation regardless of whether the user's wallet has sufficient funds to perform the TX.
+                    If this param is false, and the user wants to simulate a trade of 100 JUNO for X OSMO, the user's wallet must have at least 100 JUNO in it.
+                  example: true
                   in: query
                   name: SkipWalletFundsCheck
                   type: boolean
-                - description: This text will appear as description of your request body.
+                - description: The swap that will be simulated (no on chain transactions will be generated).
                   in: body
                   name: Body
                   required: true
-                  schema: {}
+                  schema:
+                    properties:
+                        ArbitrageWallet:
+                            description: |-
+                                On Osmosis, you must specify a wallet with at least 100 OSMO in it. If this param is left empty, the UserWallet will be used instead.
+                                NOTE: At present, on Osmosis, only arbing with the OSMO token is supported. As we will support additional tokens in the future, we use
+                                this parameter so that callers can indicate which arbitrage tokens they want to use.
+                            example: osmo14mmus5h7m6vkp0pteks8wawaj4wf3sx7fy3s2r
+                            type: string
+                        SkipWalletFundsCheck:
+                            description: |-
+                                Setting SkipWalletFundsCheck to true will run the simulation regardless of whether the user's wallet has sufficient funds to perform the TX.
+                                If this param is false, and the user wants to simulate a trade of 100 JUNO for X OSMO, the user's wallet must have at least 100 JUNO in it.
+                            example: true
+                            type: boolean
+                        TokenInAmount:
+                            description: Amount corresponding to the given symbol (NOT the base denomination). This is what a user would type into the DEX frontend.
+                            example: "100"
+                            type: string
+                        TokenInSymbol:
+                            description: e.g. OSMO or JUNO; must match the 'symbol' at https://github.com/osmosis-labs/assetlists/blob/main/osmosis-1/osmosis-1.assetlist.json.
+                            example: JUNO
+                            type: string
+                        TokenOutMinAmount:
+                            description: If trading 100 JUNO and you want at least 165 OSMO back, this would simply be set to "165".
+                            example: "165"
+                            type: string
+                        TokenOutSymbol:
+                            description: e.g. OSMO or JUNO; must match the 'symbol' at https://github.com/osmosis-labs/assetlists/blob/main/osmosis-1/osmosis-1.assetlist.json.
+                            example: OSMO
+                            type: string
+                        UserWallet:
+                            description: The swap simulation will be performed as if it is for this wallet.
+                            example: osmo1njsthsamgkzdqqg4awj7y6rxtuk3q26t2t8md2
+                            type: string
+                    type: object
             responses:
                 "200":
-                    $ref: '#/responses/result'
-            summary: Foobar does some amazing stuff.
+                    $ref: '#/responses/SimulatedSwapResult'
+            summary: Simulate the user's swap, providing the input and output token symbols and the amount the user wants to trade.
             tags:
-                - foobar-tag
+                - simulations
+    /api/secured/estimatewithpools:
+        post:
+            operationId: swapExactRequest
+            parameters:
+                - description: The swap that will be simulated (no on chain transactions will be generated).
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    properties:
+                        ArbitrageWallet:
+                            description: |-
+                                On Osmosis, you must specify a wallet with at least 100 OSMO in it. If this param is left empty, the UserWallet will be used instead.
+                                NOTE: At present, on Osmosis, only arbing with the OSMO token is supported. As we will support additional tokens in the future, we use
+                                this parameter so that callers can indicate which arbitrage tokens they want to use.
+                            example: osmo14mmus5h7m6vkp0pteks8wawaj4wf3sx7fy3s2r
+                            type: string
+                        Routes:
+                            description: The exact routes to use for the trade. These are the gamm routes used by Osmosis DEX.
+                            example:
+                                - pool_id: 1
+                                  token_out_denom: uosmo
+                            items:
+                                $ref: '#/definitions/SwapAmountInRoute'
+                            type: array
+                        SkipWalletFundsCheck:
+                            description: |-
+                                Setting SkipWalletFundsCheck to true will run the simulation regardless of whether the user's wallet has sufficient funds to perform the TX.
+                                If this param is false, and the user wants to simulate a trade of 100 JUNO for X OSMO, the user's wallet must have at least 100 JUNO in it.
+                            example: true
+                            type: boolean
+                        TokenInAmount:
+                            description: |-
+                                Amount corresponding to the given denom (NOT the symbol). This is the exact amount that the trade will be simulated for.
+                                For example, if the user wants to trade 100 OSMO, this amount would be 100000000.
+                            example: "100000000"
+                            type: string
+                        TokenInDenom:
+                            description: e.g. uosmo or ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2; must match the 'denom' at https://github.com/osmosis-labs/assetlists/blob/main/osmosis-1/osmosis-1.assetlist.json.
+                            example: ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2
+                            type: string
+                        TokenOutMinAmount:
+                            description: Will be the exact amount to submit on-chain as the minimum amount out for the trade
+                            example: "1"
+                            type: string
+                        UserWallet:
+                            description: The swap simulation will be performed as if it is for this wallet.
+                            example: osmo1njsthsamgkzdqqg4awj7y6rxtuk3q26t2t8md2
+                            type: string
+                    type: object
+            responses:
+                "200":
+                    $ref: '#/responses/SimulatedSwapResult'
+            summary: Simulate the user's swap, providing the exact routes (pools), denoms, and amounts.
+            tags:
+                - simulations
+    /api/token:
+        post:
+            description: Get a JWT that must be included with future requests
+            operationId: jwt
+            parameters:
+                - description: JWTRequest containing arbitrage wallet address (can be set to anything, is not verified)
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    properties:
+                        address:
+                            type: string
+                            x-go-name: Address
+                    type: object
+            responses:
+                "200":
+                    $ref: '#/responses/JWT'
+            tags:
+                - authentication
 produces:
     - application/json
 responses:
-    result:
-        description: This text will appear as description of your response body.
+    JWT:
+        description: ""
+        schema:
+            properties:
+                error:
+                    type: string
+                    x-go-name: Error
+                token:
+                    type: string
+                    x-go-name: Token
+            type: object
+    SimulatedSwapResult:
+        description: ""
+        schema:
+            properties:
+                HasArbitrageOpportunity:
+                    description: Whether or not the user's swap will cause arbitrage once executed on chain
+                    type: boolean
+                arbitrageSwap:
+                    $ref: '#/definitions/ArbitrageSwap'
+                error:
+                    description: if there was some issue detected on the server
+                    type: string
+                    x-go-name: Error
+                userSwap:
+                    $ref: '#/definitions/SimulatedSwap'
+            type: object
 schemes:
     - http
 securityDefinitions:
