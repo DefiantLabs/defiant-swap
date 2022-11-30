@@ -21,9 +21,9 @@ import (
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
-var genTokenUrl = "http://arb.defiantlabs.net:8081/api/token"
-var simulateSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimateswap"
-var simulateExactSwapUrl = "http://arb.defiantlabs.net:8081/api/secured/estimatewithpools"
+var genTokenUrl = "http://arb.defiantlabs.net:8080/api/token"
+var simulateSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimateswap"
+var simulateExactSwapUrl = "http://arb.defiantlabs.net:8080/api/secured/estimatewithpools"
 
 var rpcServer = "https://rpc.osmosis.zone:443"
 var defaultChain = "osmosis-1"
@@ -113,9 +113,9 @@ var swapCmd = &cobra.Command{
 		flagSet := cmd.Flags()
 
 		if localhost {
-			genTokenUrl = "http://localhost:8081/api/token"
-			simulateSwapUrl = "http://localhost:8081/api/secured/estimateswap"
-			simulateExactSwapUrl = "http://localhost:8081/api/secured/estimatewithpools"
+			genTokenUrl = "http://localhost:8080/api/token"
+			simulateSwapUrl = "http://localhost:8080/api/secured/estimateswap"
+			simulateExactSwapUrl = "http://localhost:8080/api/secured/estimatewithpools"
 		}
 
 		clientCtx = clientCtx.WithNodeURI(rpcServer)
@@ -256,17 +256,6 @@ var swapCmd = &cobra.Command{
 				result.ArbitrageSwap.SimulatedSwap.Pools,
 				result.ArbitrageSwap.SimulatedSwap.TokenOutAmount.String(),
 			)
-		}
-
-		fmt.Printf("keyringDir: %s\n", clientCtx.KeyringDir)
-		kri, err := clientCtx.Keyring.List()
-		cobra.CheckErr(err)
-
-		fmt.Printf("Listing keyring keys, %d keys total\n", len(kri))
-		counter := 1
-		for _, v := range kri {
-			fmt.Printf("(%d/%d)\n", counter, len(kri))
-			fmt.Printf("Name: %s\nType: %s\nAddress: %s\nPubkey: %s\n", v.GetName(), v.GetType(), v.GetAddress(), v.GetPubKey())
 		}
 
 		err = Confirm("Proceed with the swap?")
