@@ -1,6 +1,3 @@
-basePath: /
-consumes:
-    - application/json
 definitions:
     ArbitrageSwap:
         properties:
@@ -104,11 +101,6 @@ definitions:
             $ref: '#/definitions/SwapAmountInRoute'
         type: array
         x-go-package: github.com/osmosis-labs/osmosis/v12/x/gamm/types
-host: arb.defiantlabs.net:8080
-info:
-    description: Estimate user swaps ahead of time, and provide arbitrage trade information.
-    title: defiant-swap.
-    version: 1.0.0
 paths:
     /api/secured/estimateswap:
         post:
@@ -276,8 +268,6 @@ paths:
                     $ref: '#/responses/JWT'
             tags:
                 - authentication
-produces:
-    - application/json
 responses:
     JWT:
         description: ""
@@ -306,9 +296,4 @@ responses:
                 userSwap:
                     $ref: '#/definitions/SimulatedSwap'
             type: object
-schemes:
-    - http
-securityDefinitions:
-    basic:
-        type: basic
 swagger: "2.0"
